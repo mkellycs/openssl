@@ -610,6 +610,7 @@ typedef enum PROTOCOL_choice {
     PROTO_TELNET,
     PROTO_XMPP,
     PROTO_XMPP_SERVER,
+    PROTO_PGSQL,
     PROTO_CONNECT
 } PROTOCOL_CHOICE;
 
@@ -621,6 +622,7 @@ static OPT_PAIR services[] = {
     {"xmpp", PROTO_XMPP},
     {"xmpp-server", PROTO_XMPP_SERVER},
     {"telnet", PROTO_TELNET},
+    {"pgsql", PROTO_PGSQL},
     {NULL}
 };
 
@@ -1610,6 +1612,14 @@ int s_client_main(int argc, char **argv)
             bytes = BIO_read(sbio, mbuf, BUFSIZZ);
             if (bytes != 6 || memcmp(mbuf, tls_follows, 6) != 0)
                 goto shut;
+        }
+        break;
+    case PROTO_PGSQL:
+        {
+            char pgSSLRequest[] = {0, 0, 0, 8, 4, 210, 22, 47};
+            BIO_write(sbio, pgSSLRequest, 8);
+            BIO_flush(sbio);
+            BIO_read(sbio, mbuf, BUFSIZZ);
         }
         break;
     case PROTO_CONNECT:
