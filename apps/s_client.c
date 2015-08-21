@@ -1616,10 +1616,21 @@ int s_client_main(int argc, char **argv)
         break;
     case PROTO_PGSQL:
         {
-            char pgSSLRequest[] = {0, 0, 0, 8, 4, 210, 22, 47};
-            BIO_write(sbio, pgSSLRequest, 8);
+            /* See http://www.postgresql.org/docs/current/static/protocol-message-formats.html */
+            static const unsigned char pg_ssl_request[] = {
+                /* message_length  SSLRequest */
+                   0, 0, 0, 8,     4, 210, 22, 47
+            };
+
+            BIO_write(sbio, pg_ssl_request, 8);
             BIO_flush(sbio);
+
+            /* Server will respond with 'S' if it is will to serve ssl */
             BIO_read(sbio, mbuf, BUFSIZZ);
+            if (mbuf[0] != 'S') {
+                BIO_printf(bio_err, "%s: Postgres server refused ssl\n", prog);
+                goto shut;
+            }
         }
         break;
     case PROTO_CONNECT:
